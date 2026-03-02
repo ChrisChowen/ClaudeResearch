@@ -161,13 +161,16 @@
             <button class="btn btn--outline" id="launchOBSBtn" onclick="launchOBS()" style="margin-bottom:12px">
               Launch OBS
             </button>
+            <div class="obs-help-text" style="margin-bottom:12px; padding:10px 14px; background:var(--bg-elevated); border-radius:var(--radius); font-size:13px; line-height:1.5">
+              <strong>Enable WebSocket in OBS:</strong><br>
+              1. In OBS, go to <strong>Tools &rarr; WebSocket Server Settings</strong><br>
+              2. Tick <strong>"Enable WebSocket server"</strong><br>
+              3. Copy the <strong>Server Password</strong> (click "Show Connect Info")<br>
+              4. Click <strong>OK</strong> to save, then paste the password below
+            </div>
             <div class="form-group">
-              <label for="obsPassword">WebSocket Password (if set)</label>
-              <input type="password" id="obsPassword" placeholder="Leave blank if no password">
-              <div class="obs-help-text">
-                OBS 28+ has WebSocket built in. Check <strong>Tools &rarr; WebSocket Server Settings</strong>
-                to enable it and find the password.
-              </div>
+              <label for="obsPassword">WebSocket Password</label>
+              <input type="password" id="obsPassword" placeholder="Paste password from OBS Connect Info">
             </div>
             <button class="btn btn--primary" id="obsConnectBtn" onclick="connectOBS()">
               Connect to OBS

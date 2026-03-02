@@ -27,7 +27,7 @@ The tool is designed for a single-laptop research setup:
 - **git** (for project version tracking)
 - **jq** (for Claude Code hooks)
 - **Claude Code** (`npm install -g @anthropic-ai/claude-code`)
-- **OBS Studio** (optional, for screen/webcam recording)
+- **OBS Studio** (optional, for screen/webcam recording — WebSocket control requires OBS 28+)
 
 ## Quick Start
 
@@ -36,7 +36,18 @@ npm install
 npm start
 ```
 
+Or double-click **`Start Session Setup.command`** to launch without using the terminal.
+
 The admin dashboard opens automatically at `http://localhost:3000/admin`.
+
+## OBS Integration
+
+Step 4 of the admin wizard supports two modes:
+
+- **Auto (WebSocket)** — Connects to OBS via its built-in WebSocket server (OBS 28+, port 4455). Automatically sets the recording path, starts/stops recording, and shows a live recording indicator on both the admin dashboard and researcher monitor.
+- **Manual** — Fallback mode with checkboxes for researchers who prefer to configure OBS themselves.
+
+To use auto mode, enable the WebSocket server in OBS: **Tools → WebSocket Server Settings → Enable WebSocket server**.
 
 ## Session Modes
 
@@ -47,11 +58,13 @@ The admin dashboard opens automatically at `http://localhost:3000/admin`.
 
 ```
 ├── server.js                  # Express server, API routes, SSE
+├── Start Session Setup.command # Double-click launcher for researchers
 ├── lib/
 │   ├── session.js             # Session lifecycle (create, launch, export)
 │   ├── hooks-config.js        # Claude Code hooks configuration
 │   ├── claude-md.js           # CLAUDE.md content (enhanced mode)
-│   └── export.js              # Post-session data export
+│   ├── export.js              # Post-session data export
+│   └── obs.js                 # OBS WebSocket integration
 ├── public/
 │   ├── admin.html             # 7-step setup wizard
 │   ├── participant.html       # Participant-facing page
