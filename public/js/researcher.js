@@ -31,6 +31,8 @@ function getEventType(event) {
     case 'recording_started':
     case 'ethics_gate_confirmed':
       return { label: 'SESSION', className: 'session' };
+    case 'obs_recording_state': return { label: 'OBS', className: 'sync' };
+    case 'obs_disconnected': return { label: 'OBS', className: 'session' };
     default: return { label: 'EVENT', className: 'session' };
   }
 }
@@ -47,6 +49,10 @@ function getEventDetail(event) {
     case 'session_end': return `Session ended${event.reason ? ': ' + event.reason : ''}`;
     case 'recording_started': return 'OBS recording confirmed';
     case 'ethics_gate_confirmed': return 'Ethics requirements confirmed';
+    case 'obs_recording_state':
+      return event.outputActive ? 'Recording started' : 'Recording stopped';
+    case 'obs_disconnected':
+      return 'OBS WebSocket disconnected' + (event.reason ? ': ' + event.reason : '');
     default: return JSON.stringify(event);
   }
 }
@@ -143,6 +149,9 @@ async function checkSessionStatus() {
       if (!eventSource) {
         connectSSE();
       }
+
+      // Check OBS recording status
+      checkOBSStatus();
     }
   } catch {
     // Server not available
@@ -223,6 +232,46 @@ async function runExport() {
     alert('Export error: ' + err.message);
     btn.disabled = false;
     btn.textContent = 'Export';
+  }
+}
+
+// --- OBS recording status ---
+
+async function checkOBSStatus() {
+  try {
+    const res = await fetch('/api/obs/status');
+    const data = await res.json();
+
+    const indicator = document.getElementById('obsRecIndicator');
+    const stopBtn = document.getElementById('stopRecordingBtn');
+
+    if (data.connected && data.recording) {
+      indicator.style.display = 'flex';
+      stopBtn.style.display = 'inline-flex';
+    } else {
+      indicator.style.display = 'none';
+      stopBtn.style.display = 'none';
+    }
+  } catch {
+    // OBS status unavailable
+  }
+}
+
+async function stopOBSRecording() {
+  if (!confirm('Stop OBS recording? This cannot be undone.')) return;
+
+  const btn = document.getElementById('stopRecordingBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Stopping...';
+
+  try {
+    await fetch('/api/obs/stop-recording', { method: 'POST' });
+    btn.style.display = 'none';
+    document.getElementById('obsRecIndicator').style.display = 'none';
+  } catch (err) {
+    alert('Error stopping recording: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Stop Recording';
   }
 }
 

@@ -2,6 +2,15 @@ let currentStep = 1;
 let sessionMode = 'vanilla';
 let sessionData = null;
 
+// OBS auto mode state
+let obsMode = 'auto';
+let obsConnected = false;
+let obsRecordingActive = false;
+let obsRecTimerInterval = null;
+let obsRecStartTime = null;
+let obsPollingInterval = null;
+let obsInstalled = false;
+
 // --- Step navigation ---
 
 function goToStep(step) {
@@ -14,6 +23,13 @@ function goToStep(step) {
     if (i + 1 < step) item.classList.add('completed');
     if (i + 1 === step) item.classList.add('active');
   });
+
+  // Manage OBS polling
+  if (step === 4 && obsMode === 'auto') {
+    startOBSPolling();
+  } else {
+    stopOBSPolling();
+  }
 
   currentStep = step;
 }
@@ -50,6 +66,10 @@ async function checkDependencies() {
 
     document.getElementById('depLoading').style.display = 'none';
     list.style.display = 'block';
+
+    // Track OBS install status for auto/manual mode default
+    const obsDep = data.dependencies.find(d => d.name === 'OBS Studio');
+    obsInstalled = obsDep && obsDep.status === 'ok';
 
     if (allOk) {
       document.getElementById('depNextBtn').disabled = false;
@@ -176,7 +196,23 @@ function copyRecordingsPath() {
   }
 }
 
-// --- Step 4: OBS recording checkboxes ---
+// --- Step 4: OBS Mode Toggle ---
+
+function setOBSMode(mode) {
+  obsMode = mode;
+  document.getElementById('obsModeAuto').classList.toggle('selected', mode === 'auto');
+  document.getElementById('obsModeManual').classList.toggle('selected', mode === 'manual');
+  document.getElementById('obsAutoMode').classList.toggle('hidden', mode !== 'auto');
+  document.getElementById('obsManualMode').classList.toggle('hidden', mode !== 'manual');
+
+  if (mode === 'auto') {
+    startOBSPolling();
+  } else {
+    stopOBSPolling();
+  }
+}
+
+// --- Step 4: Manual mode checkboxes ---
 
 function setupOBSCheckboxes() {
   const checkboxes = ['obsConfigured', 'obsPathSet', 'obsRecording'];
@@ -194,7 +230,11 @@ async function confirmRecording() {
   btn.innerHTML = '<span class="spinner"></span> Confirming...';
 
   try {
-    const res = await fetch('/api/session/confirm-recording', { method: 'POST' });
+    const res = await fetch('/api/session/confirm-recording', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'manual' })
+    });
     const data = await res.json();
 
     document.getElementById('syncMarkerValue').textContent = data.marker;
@@ -205,6 +245,195 @@ async function confirmRecording() {
     alert('Error: ' + err.message);
     btn.disabled = false;
     btn.textContent = 'Confirm Recording Started';
+  }
+}
+
+// --- Step 4: OBS Auto Mode ---
+
+function startOBSPolling() {
+  pollOBSStatus();
+  obsPollingInterval = setInterval(pollOBSStatus, 2000);
+}
+
+function stopOBSPolling() {
+  if (obsPollingInterval) {
+    clearInterval(obsPollingInterval);
+    obsPollingInterval = null;
+  }
+}
+
+async function pollOBSStatus() {
+  try {
+    const res = await fetch('/api/obs/status');
+    const data = await res.json();
+    updateOBSUI(data);
+  } catch {
+    updateOBSUI({ connected: false, recording: false });
+  }
+}
+
+function updateOBSUI(status) {
+  const dot = document.getElementById('obsStatusDotAuto');
+  const text = document.getElementById('obsStatusText');
+
+  obsConnected = status.connected;
+  obsRecordingActive = status.recording;
+
+  // Hide all phases first
+  document.getElementById('obsPhase1').classList.add('hidden');
+  document.getElementById('obsPhase2Connected').classList.add('hidden');
+  document.getElementById('obsAutoConfirmGroup').style.display = 'none';
+  document.getElementById('obsAutoBackGroup').style.display = 'flex';
+
+  if (!obsInstalled) {
+    dot.className = 'obs-status-dot obs-status-dot--disconnected';
+    text.textContent = 'OBS not installed \u2014 use Manual mode';
+    return;
+  }
+
+  if (!status.connected) {
+    dot.className = 'obs-status-dot obs-status-dot--disconnected';
+    text.textContent = 'Not connected to OBS';
+    document.getElementById('obsPhase1').classList.remove('hidden');
+  } else if (!status.recording) {
+    dot.className = 'obs-status-dot obs-status-dot--connected';
+    text.textContent = 'Connected to OBS';
+    document.getElementById('obsPhase2Connected').classList.remove('hidden');
+    document.getElementById('obsPreRecording').classList.remove('hidden');
+    document.getElementById('obsRecordingActive').classList.add('hidden');
+
+    if (sessionData) {
+      document.getElementById('obsRecordPath').textContent = sessionData.recordingsDir;
+    }
+  } else {
+    dot.className = 'obs-status-dot obs-status-dot--recording';
+    text.textContent = 'Recording';
+    document.getElementById('obsPhase2Connected').classList.remove('hidden');
+    document.getElementById('obsPreRecording').classList.add('hidden');
+    document.getElementById('obsRecordingActive').classList.remove('hidden');
+    document.getElementById('obsAutoConfirmGroup').style.display = 'flex';
+    document.getElementById('obsAutoBackGroup').style.display = 'none';
+
+    // Start rec timer if not already running
+    if (!obsRecTimerInterval && !obsRecStartTime) {
+      obsRecStartTime = Date.now();
+      startOBSRecTimer();
+    }
+  }
+}
+
+async function launchOBS() {
+  const btn = document.getElementById('launchOBSBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Launching...';
+
+  try {
+    await fetch('/api/obs/launch', { method: 'POST' });
+    btn.textContent = 'OBS launching... waiting to connect';
+    // Wait for OBS to start, then try connecting
+    setTimeout(async () => {
+      try { await connectOBS(); } catch { /* polling will handle */ }
+      btn.disabled = false;
+      btn.textContent = 'Launch OBS';
+    }, 4000);
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Launch OBS';
+    alert('Could not launch OBS: ' + err.message);
+  }
+}
+
+async function connectOBS() {
+  const btn = document.getElementById('obsConnectBtn');
+  const errorEl = document.getElementById('obsConnectError');
+  const password = document.getElementById('obsPassword').value;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Connecting...';
+  errorEl.classList.add('hidden');
+
+  try {
+    const res = await fetch('/api/obs/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: password || undefined })
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Connection failed');
+
+    // Auto-set recording path
+    if (sessionData) {
+      await fetch('/api/obs/set-recording-path', { method: 'POST' });
+    }
+
+    pollOBSStatus();
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Connect to OBS';
+  }
+}
+
+async function startOBSRecording() {
+  const btn = document.getElementById('obsStartRecBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Starting...';
+
+  try {
+    const res = await fetch('/api/obs/start-recording', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to start recording');
+
+    obsRecStartTime = Date.now();
+    startOBSRecTimer();
+    pollOBSStatus();
+  } catch (err) {
+    alert('Failed to start recording: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Start Recording';
+  }
+}
+
+function startOBSRecTimer() {
+  if (obsRecTimerInterval) clearInterval(obsRecTimerInterval);
+  obsRecTimerInterval = setInterval(() => {
+    if (!obsRecStartTime) return;
+    const elapsed = Math.floor((Date.now() - obsRecStartTime) / 1000);
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    const timerEl = document.getElementById('obsRecTimer');
+    if (timerEl) {
+      timerEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+  }, 1000);
+}
+
+async function confirmRecordingAuto() {
+  const btn = document.getElementById('obsAutoConfirmBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Confirming...';
+
+  try {
+    const res = await fetch('/api/session/confirm-recording', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'auto' })
+    });
+    const data = await res.json();
+
+    document.getElementById('syncMarkerValue').textContent = data.marker;
+    document.getElementById('syncMarkerTime').textContent =
+      new Date(data.timestamp).toLocaleString();
+
+    stopOBSPolling();
+    goToStep(5);
+  } catch (err) {
+    alert('Error: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Confirm & Continue';
   }
 }
 

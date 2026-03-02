@@ -48,6 +48,10 @@
           <span class="session-bar__label">Started:</span>
           <span class="session-bar__value" id="barStartTime">--</span>
         </div>
+        <div class="session-bar__item" id="obsRecIndicator" style="display:none">
+          <span class="obs-rec-dot-sm"></span>
+          <span class="session-bar__value" style="color:var(--danger)">REC</span>
+        </div>
       </div>
 
       <!-- Timer -->
@@ -101,6 +105,10 @@
               </button>
               <button class="btn btn--outline btn--sm" onclick="addSyncMarker('SESSION_END')">
                 Mark Session End
+              </button>
+              <button class="btn btn--danger btn--sm" id="stopRecordingBtn"
+                      onclick="stopOBSRecording()" style="display:none">
+                Stop Recording
               </button>
               <button class="btn btn--primary btn--sm" onclick="showExportDialog()">
                 Export Data

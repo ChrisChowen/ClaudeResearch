@@ -6,6 +6,7 @@ const chokidar = require('chokidar');
 const QRCode = require('qrcode');
 const session = require('./lib/session');
 const { runExport } = require('./lib/export');
+const obs = require('./lib/obs');
 
 function getLocalIPs() {
   const interfaces = os.networkInterfaces();
@@ -42,6 +43,15 @@ function broadcastEvent(data) {
     client.write(message);
   }
 }
+
+// Wire OBS events into SSE broadcast + research log
+obs.setStateChangeCallback((eventData) => {
+  const current = session.getCurrentSession();
+  if (current && current.logFile) {
+    fs.appendFileSync(current.logFile, JSON.stringify(eventData) + '\n');
+  }
+  broadcastEvent(eventData);
+});
 
 function startWatchingLog(logFile) {
   if (logWatcher) {
@@ -127,7 +137,8 @@ app.get('/api/qr', async (req, res) => {
 
 app.get('/api/dependencies', (req, res) => {
   const deps = session.checkDependencies();
-  res.json({ dependencies: deps });
+  const obsStatus = obs.getStatus();
+  res.json({ dependencies: deps, obsWebSocket: obsStatus });
 });
 
 app.get('/api/session/status', (req, res) => {
@@ -172,7 +183,8 @@ app.post('/api/session/delete', (req, res) => {
 
 app.post('/api/session/confirm-recording', (req, res) => {
   try {
-    const result = session.confirmRecording();
+    const mode = req.body && req.body.mode ? req.body.mode : 'manual';
+    const result = session.confirmRecording(mode);
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -226,6 +238,60 @@ app.post('/api/session/export', (req, res) => {
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// --- OBS WebSocket routes ---
+
+app.get('/api/obs/status', (req, res) => {
+  res.json(obs.getStatus());
+});
+
+app.post('/api/obs/connect', async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    const result = await obs.connect(password);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/obs/launch', async (req, res) => {
+  try {
+    const result = await obs.launchOBS();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/obs/set-recording-path', async (req, res) => {
+  try {
+    const current = session.getCurrentSession();
+    if (!current) return res.status(400).json({ error: 'No active session' });
+    const result = await obs.setRecordingPath(current.recordingsDir);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/obs/start-recording', async (req, res) => {
+  try {
+    const result = await obs.startRecording();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/obs/stop-recording', async (req, res) => {
+  try {
+    const result = await obs.stopRecording();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

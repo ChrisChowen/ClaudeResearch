@@ -138,29 +138,112 @@
         <div class="step__title">OBS Recording</div>
       </div>
       <div class="card">
-        <div class="card__description">
-          Ensure OBS is configured and start recording before proceeding.
+        <!-- Mode toggle -->
+        <div class="obs-mode-toggle">
+          <button class="toggle-group__option selected" id="obsModeAuto"
+                  onclick="setOBSMode('auto')">Auto (WebSocket)</button>
+          <button class="toggle-group__option" id="obsModeManual"
+                  onclick="setOBSMode('manual')">Manual</button>
         </div>
-        <ul class="checklist">
-          <li class="checklist__item">
-            <input type="checkbox" id="obsConfigured">
-            <span>OBS is open and configured (screen + webcam + mic)</span>
-          </li>
-          <li class="checklist__item">
-            <input type="checkbox" id="obsPathSet">
-            <span>Recording path is set to the session recordings directory</span>
-          </li>
-          <li class="checklist__item">
-            <input type="checkbox" id="obsRecording">
-            <span>OBS recording has been started</span>
-          </li>
-        </ul>
-        <div class="btn-group">
-          <button class="btn btn--outline" onclick="goToStep(3)">Back</button>
-          <button class="btn btn--success" id="confirmRecordingBtn" disabled
-                  onclick="confirmRecording()">
-            Confirm Recording Started
-          </button>
+
+        <!-- === AUTO MODE === -->
+        <div id="obsAutoMode">
+          <div class="obs-status-bar" id="obsStatusBar">
+            <span class="obs-status-dot obs-status-dot--disconnected" id="obsStatusDotAuto"></span>
+            <span id="obsStatusText">Checking OBS...</span>
+          </div>
+
+          <!-- Phase 1: OBS not running / not connected -->
+          <div id="obsPhase1" class="obs-phase">
+            <div class="card__description">
+              Connect to OBS to automatically configure recording.
+            </div>
+            <button class="btn btn--outline" id="launchOBSBtn" onclick="launchOBS()" style="margin-bottom:12px">
+              Launch OBS
+            </button>
+            <div class="form-group">
+              <label for="obsPassword">WebSocket Password (if set)</label>
+              <input type="password" id="obsPassword" placeholder="Leave blank if no password">
+              <div class="obs-help-text">
+                OBS 28+ has WebSocket built in. Check <strong>Tools &rarr; WebSocket Server Settings</strong>
+                to enable it and find the password.
+              </div>
+            </div>
+            <button class="btn btn--primary" id="obsConnectBtn" onclick="connectOBS()">
+              Connect to OBS
+            </button>
+            <div class="obs-connect-error hidden" id="obsConnectError"></div>
+          </div>
+
+          <!-- Phase 2: Connected, ready to record -->
+          <div id="obsPhase2Connected" class="obs-phase hidden">
+            <div class="alert alert--success">Connected to OBS WebSocket</div>
+
+            <div class="obs-config-item">
+              <span>Recording path</span>
+              <span style="color:var(--success)">&#10003; Set automatically</span>
+            </div>
+            <div class="copy-box" style="margin-bottom:16px">
+              <span class="copy-box__text" id="obsRecordPath">--</span>
+            </div>
+
+            <div id="obsPreRecording">
+              <button class="btn btn--success btn--block" id="obsStartRecBtn"
+                      onclick="startOBSRecording()">
+                Start Recording
+              </button>
+            </div>
+
+            <div id="obsRecordingActive" class="hidden">
+              <div class="obs-recording-indicator">
+                <span class="obs-rec-dot"></span>
+                <span>Recording in progress</span>
+                <span class="obs-rec-timer" id="obsRecTimer">00:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirm button (visible once recording) -->
+          <div class="btn-group" id="obsAutoConfirmGroup" style="display:none">
+            <button class="btn btn--outline" onclick="goToStep(3)">Back</button>
+            <button class="btn btn--success" id="obsAutoConfirmBtn"
+                    onclick="confirmRecordingAuto()">
+              Confirm &amp; Continue
+            </button>
+          </div>
+
+          <!-- Back button when not yet recording -->
+          <div class="btn-group" id="obsAutoBackGroup">
+            <button class="btn btn--outline" onclick="goToStep(3)">Back</button>
+          </div>
+        </div>
+
+        <!-- === MANUAL MODE === -->
+        <div id="obsManualMode" class="hidden">
+          <div class="card__description">
+            Ensure OBS is configured and start recording before proceeding.
+          </div>
+          <ul class="checklist">
+            <li class="checklist__item">
+              <input type="checkbox" id="obsConfigured">
+              <span>OBS is open and configured (screen + webcam + mic)</span>
+            </li>
+            <li class="checklist__item">
+              <input type="checkbox" id="obsPathSet">
+              <span>Recording path is set to the session recordings directory</span>
+            </li>
+            <li class="checklist__item">
+              <input type="checkbox" id="obsRecording">
+              <span>OBS recording has been started</span>
+            </li>
+          </ul>
+          <div class="btn-group">
+            <button class="btn btn--outline" onclick="goToStep(3)">Back</button>
+            <button class="btn btn--success" id="confirmRecordingBtn" disabled
+                    onclick="confirmRecording()">
+              Confirm Recording Started
+            </button>
+          </div>
         </div>
       </div>
     </div>

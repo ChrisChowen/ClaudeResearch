@@ -747,3 +747,118 @@ body {
 .session-bar__value {
   font-weight: 500;
 }
+
+/* === OBS WebSocket === */
+
+.obs-mode-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.obs-mode-toggle .toggle-group__option {
+  border-radius: 0;
+  border: none;
+  flex: 1;
+}
+
+.obs-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.obs-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.obs-status-dot--disconnected {
+  background: var(--text-muted);
+}
+
+.obs-status-dot--connected {
+  background: var(--success);
+}
+
+.obs-status-dot--recording {
+  background: var(--danger);
+  animation: obs-pulse 1s ease-in-out infinite;
+}
+
+@keyframes obs-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.obs-phase {
+  margin-bottom: 16px;
+}
+
+.obs-config-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.obs-recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--danger-bg);
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--danger);
+  margin-bottom: 16px;
+}
+
+.obs-rec-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: obs-pulse 1s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.obs-rec-dot-sm {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: obs-pulse 1s ease-in-out infinite;
+  display: inline-block;
+}
+
+.obs-rec-timer {
+  margin-left: auto;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+}
+
+.obs-connect-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.obs-help-text {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 6px;
+  line-height: 1.5;
+}
