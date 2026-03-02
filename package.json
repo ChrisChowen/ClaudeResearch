@@ -1,0 +1,20 @@
+{
+  "name": "claude-research-session-setup",
+  "version": "1.0.0",
+  "description": "Session setup and monitoring for Study 1: First Encounters with Vibe-Coding",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js --dev"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.0",
+    "express": "^4.21.0",
+    "open": "^10.1.0",
+    "qrcode": "^1.5.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true
+}

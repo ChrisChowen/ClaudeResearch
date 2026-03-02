@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session Setup - Study 1</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="header">
+    <div class="header__title">Study 1: First Encounters with Vibe-Coding</div>
+    <div class="header__subtitle">Session Setup Dashboard</div>
+    <div class="header__nav">
+      <a href="/admin" class="header__link">Setup</a>
+      <a href="/researcher" class="header__link" target="_blank">Researcher Monitor</a>
+      <a href="/participant" class="header__link" target="_blank">Participant Page</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Step indicator -->
+    <ul class="step-indicator" id="stepIndicator">
+      <li class="step-indicator__item active"></li>
+      <li class="step-indicator__item"></li>
+      <li class="step-indicator__item"></li>
+      <li class="step-indicator__item"></li>
+      <li class="step-indicator__item"></li>
+      <li class="step-indicator__item"></li>
+      <li class="step-indicator__item"></li>
+    </ul>
+
+    <!-- Step 1: Dependencies -->
+    <div class="step active" id="step1">
+      <div class="step__header">
+        <div class="step__number">1</div>
+        <div class="step__title">Dependency Check</div>
+      </div>
+      <div class="card">
+        <div id="depLoading">
+          <span class="spinner"></span> Checking dependencies...
+        </div>
+        <ul class="dep-list" id="depList" style="display:none"></ul>
+        <div id="depError" class="alert alert--danger hidden"></div>
+        <div class="btn-group">
+          <button class="btn btn--primary" id="depNextBtn" disabled onclick="goToStep(2)">
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Session Configuration -->
+    <div class="step" id="step2">
+      <div class="step__header">
+        <div class="step__number">2</div>
+        <div class="step__title">Session Configuration</div>
+      </div>
+      <div class="card">
+        <div class="form-group">
+          <label for="participantId">Participant ID</label>
+          <input type="text" id="participantId" placeholder="P01" maxlength="4"
+                 style="text-transform: uppercase">
+          <div class="hint">Format: P01, P02, ... P99</div>
+          <div class="error hidden" id="pidError"></div>
+        </div>
+        <div class="form-group">
+          <label for="direction">Creative Direction</label>
+          <select id="direction">
+            <option value="not-yet-chosen">Not yet chosen</option>
+            <option value="interactive-tool">Interactive element for creative practice</option>
+            <option value="portfolio-component">Portfolio or showcase component</option>
+            <option value="creative-experiment">Small creative experiment</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="description">Brief Project Description</label>
+          <textarea id="description" placeholder="Optional - can be filled in later"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Session Mode</label>
+          <div class="toggle-group" id="modeToggle">
+            <button class="toggle-group__option selected" data-value="vanilla"
+                    onclick="selectMode('vanilla')">
+              Vanilla
+            </button>
+            <button class="toggle-group__option" data-value="enhanced"
+                    onclick="selectMode('enhanced')">
+              Enhanced
+            </button>
+          </div>
+          <div class="hint" id="modeHint">
+            Out-of-the-box Claude Code. No system prompt or onboarding.
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn--outline" onclick="goToStep(1)">Back</button>
+          <button class="btn btn--primary" id="createBtn" onclick="createSession()">
+            Create Session
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Session Created -->
+    <div class="step" id="step3">
+      <div class="step__header">
+        <div class="step__number">3</div>
+        <div class="step__title">Session Created</div>
+      </div>
+      <div class="card">
+        <div class="alert alert--success" id="createSuccess" style="display:none"></div>
+        <ul class="progress-steps" id="createSteps"></ul>
+
+        <div id="sessionSummary" style="display:none">
+          <div class="card__title" style="margin-top:16px">OBS Recording Path</div>
+          <div class="card__description">Copy this path and set it as the recording directory in OBS.</div>
+          <div class="copy-box">
+            <span class="copy-box__text" id="recordingsPath"></span>
+            <button class="btn btn--sm btn--outline copy-box__btn" onclick="copyRecordingsPath()">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn--primary" id="step3NextBtn" style="display:none"
+                  onclick="goToStep(4)">
+            Continue to Recording
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: OBS Recording -->
+    <div class="step" id="step4">
+      <div class="step__header">
+        <div class="step__number">4</div>
+        <div class="step__title">OBS Recording</div>
+      </div>
+      <div class="card">
+        <div class="card__description">
+          Ensure OBS is configured and start recording before proceeding.
+        </div>
+        <ul class="checklist">
+          <li class="checklist__item">
+            <input type="checkbox" id="obsConfigured">
+            <span>OBS is open and configured (screen + webcam + mic)</span>
+          </li>
+          <li class="checklist__item">
+            <input type="checkbox" id="obsPathSet">
+            <span>Recording path is set to the session recordings directory</span>
+          </li>
+          <li class="checklist__item">
+            <input type="checkbox" id="obsRecording">
+            <span>OBS recording has been started</span>
+          </li>
+        </ul>
+        <div class="btn-group">
+          <button class="btn btn--outline" onclick="goToStep(3)">Back</button>
+          <button class="btn btn--success" id="confirmRecordingBtn" disabled
+                  onclick="confirmRecording()">
+            Confirm Recording Started
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: Sync Marker -->
+    <div class="step" id="step5">
+      <div class="step__header">
+        <div class="step__number">5</div>
+        <div class="step__title">Sync Marker</div>
+      </div>
+      <div class="card">
+        <div class="alert alert--success">
+          Sync marker has been automatically captured and written to the research log.
+        </div>
+        <div class="sync-marker" id="syncMarkerDisplay">
+          <div class="sync-marker__label">Sync Marker</div>
+          <div class="sync-marker__value" id="syncMarkerValue"></div>
+          <div class="sync-marker__time" id="syncMarkerTime"></div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn--primary" onclick="goToStep(6)">Continue to Ethics Gate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 6: Ethics Gate -->
+    <div class="step" id="step6">
+      <div class="step__header">
+        <div class="step__number">6</div>
+        <div class="step__title">Ethics &amp; Consent Confirmation</div>
+      </div>
+      <div class="card">
+        <div class="card__description">
+          Confirm the following requirements on camera before proceeding.
+          This confirmation will be logged with a timestamp.
+        </div>
+        <ul class="checklist">
+          <li class="checklist__item">
+            <input type="checkbox" id="ethicsConsent">
+            <span>Participant consent form has been signed</span>
+          </li>
+          <li class="checklist__item">
+            <input type="checkbox" id="ethicsInfo">
+            <span>Participant information sheet has been provided and discussed</span>
+          </li>
+          <li class="checklist__item">
+            <input type="checkbox" id="ethicsThinkAloud">
+            <span>Participant has been briefed on the think-aloud protocol</span>
+          </li>
+          <li class="checklist__item">
+            <input type="checkbox" id="ethicsReady">
+            <span>Participant confirms they are ready to proceed</span>
+          </li>
+        </ul>
+        <div class="btn-group">
+          <button class="btn btn--outline" onclick="goToStep(5)">Back</button>
+          <button class="btn btn--success" id="confirmEthicsBtn" disabled
+                  onclick="confirmEthics()">
+            Confirm All Ethics Requirements
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 7: Launch -->
+    <div class="step" id="step7">
+      <div class="step__header">
+        <div class="step__number">7</div>
+        <div class="step__title">Launch &amp; Hand Over</div>
+      </div>
+
+      <!-- Pre-launch -->
+      <div class="card" id="preLaunchCard">
+        <div class="alert alert--success" id="ethicsTimestamp" style="display:none"></div>
+
+        <div class="card__title">Ready to Launch</div>
+        <div class="card__description">
+          Claude Code will open in a new Terminal window on this machine.
+          After launching, you will hand this laptop to the participant.
+        </div>
+
+        <button class="btn btn--primary btn--block" id="launchBtn" onclick="launchSession()">
+          Launch Claude Code
+        </button>
+      </div>
+
+      <!-- Post-launch: researcher URL + handover -->
+      <div id="postLaunchCard" class="hidden">
+        <div class="card" style="border-color: var(--success)">
+          <div class="alert alert--success">
+            Claude Code launched in Terminal on this machine.
+          </div>
+
+          <div class="card__title" style="margin-top:16px">Researcher Monitor</div>
+          <div class="card__description">
+            Open this URL on your phone, tablet, or second laptop to monitor the
+            session. You will not be able to use this machine once the participant starts.
+          </div>
+          <div class="copy-box">
+            <span class="copy-box__text" id="researcherUrl">Loading...</span>
+            <button class="btn btn--sm btn--outline copy-box__btn" onclick="copyResearcherUrl()">
+              Copy
+            </button>
+          </div>
+
+          <!-- Alternative IPs for university networks -->
+          <div id="altIPs" class="hidden" style="margin-top:8px">
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px">
+              If the URL above doesn't work, try one of these (other network interfaces):
+            </div>
+            <div id="altIPList" style="font-size:13px; font-family:monospace"></div>
+          </div>
+
+          <!-- QR code (generated locally, works offline) -->
+          <div style="text-align:center; margin: 16px 0">
+            <img id="researcherQR" alt="QR code for researcher monitor"
+                 style="width:180px; height:180px; border-radius:var(--radius)">
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px">
+              Scan with your phone to open the researcher monitor
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="border-color: var(--warning); margin-top:16px">
+          <div class="card__title">Ready to Hand Over</div>
+          <div class="card__description">
+            This browser tab will become the participant's screen. It will show
+            the sync marker (for OBS), then their session timer and quick reference tips.
+            Make sure you have the researcher monitor open on your own device before proceeding.
+          </div>
+          <ul class="checklist">
+            <li class="checklist__item">
+              <input type="checkbox" id="researcherMonitorReady">
+              <span>I have the researcher monitor open on my separate device</span>
+            </li>
+          </ul>
+          <button class="btn btn--success btn--block" id="handoverBtn" disabled
+                  onclick="handOverToParticipant()"
+                  style="margin-top:12px; font-size:16px; padding:14px 24px">
+            Hand Over to Participant
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

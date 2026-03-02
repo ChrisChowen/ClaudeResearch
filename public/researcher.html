@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Researcher Monitor - Study 1</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="header">
+    <div class="header__title">Researcher Monitor</div>
+    <div class="header__subtitle">Live Session Dashboard</div>
+    <div class="header__nav">
+      <a href="/admin" class="header__link">Setup</a>
+      <a href="/researcher" class="header__link">Monitor</a>
+      <a href="/participant" class="header__link" target="_blank">Participant Page</a>
+    </div>
+  </div>
+
+  <div class="container container--wide">
+    <!-- Waiting state -->
+    <div id="waitingState">
+      <div class="card" style="text-align:center; padding:48px">
+        <div class="card__title">No Active Session</div>
+        <div class="card__description">
+          Start a session from the <a href="/admin">admin dashboard</a> to begin monitoring.
+        </div>
+      </div>
+    </div>
+
+    <!-- Active state -->
+    <div id="activeState" class="hidden">
+      <!-- Session info bar -->
+      <div class="session-bar" id="sessionBar">
+        <div class="session-bar__item">
+          <span class="session-bar__label">Participant:</span>
+          <span class="session-bar__value" id="barParticipant">--</span>
+        </div>
+        <div class="session-bar__item">
+          <span class="session-bar__label">Direction:</span>
+          <span class="session-bar__value" id="barDirection">--</span>
+        </div>
+        <div class="session-bar__item">
+          <span class="session-bar__label">Mode:</span>
+          <span class="session-bar__value" id="barMode">--</span>
+        </div>
+        <div class="session-bar__item">
+          <span class="session-bar__label">Started:</span>
+          <span class="session-bar__value" id="barStartTime">--</span>
+        </div>
+      </div>
+
+      <!-- Timer -->
+      <div class="card" style="text-align:center">
+        <div class="timer" id="timer">00:00:00</div>
+      </div>
+
+      <!-- Main grid -->
+      <div class="monitor-grid">
+        <!-- Left: Event feed -->
+        <div class="card">
+          <div class="card__title">Event Feed</div>
+          <ul class="event-feed" id="eventFeed">
+            <li class="event-feed__item" style="color:var(--text-muted); font-style:italic">
+              Waiting for events...
+            </li>
+          </ul>
+        </div>
+
+        <!-- Right: Stats + Actions -->
+        <div>
+          <!-- Stats -->
+          <div class="card">
+            <div class="card__title">Session Stats</div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-card__value" id="statPrompts">0</div>
+                <div class="stat-card__label">Prompts</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-card__value" id="statTools">0</div>
+                <div class="stat-card__label">Tool Uses</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-card__value" id="statFiles">0</div>
+                <div class="stat-card__label">File Changes</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-card__value" id="statEvents">0</div>
+                <div class="stat-card__label">Total Events</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <div class="card__title">Quick Actions</div>
+            <div class="quick-actions">
+              <button class="btn btn--outline btn--sm" onclick="addSyncMarker('INTERVIEW_START')">
+                Mark Interview Start
+              </button>
+              <button class="btn btn--outline btn--sm" onclick="addSyncMarker('SESSION_END')">
+                Mark Session End
+              </button>
+              <button class="btn btn--primary btn--sm" onclick="showExportDialog()">
+                Export Data
+              </button>
+            </div>
+
+            <!-- Note input -->
+            <div class="note-input">
+              <input type="text" id="noteInput" placeholder="Add observation note..."
+                     onkeydown="if(event.key==='Enter')addNote()">
+              <button class="btn btn--sm btn--outline" onclick="addNote()">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export dialog -->
+    <div id="exportDialog" class="hidden">
+      <div class="card" style="border-color:var(--primary)">
+        <div class="card__title">Export Session Data</div>
+        <div class="form-group">
+          <label for="exportNotes">Session Notes (optional)</label>
+          <textarea id="exportNotes" placeholder="Brief notes about this session..."></textarea>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn--outline" onclick="hideExportDialog()">Cancel</button>
+          <button class="btn btn--primary" id="exportBtn" onclick="runExport()">Export</button>
+        </div>
+        <div id="exportResults" class="hidden" style="margin-top:16px">
+          <ul class="progress-steps" id="exportSteps"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/researcher.js"></script>
+</body>
+</html>

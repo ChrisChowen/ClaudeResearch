@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Creative Session</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    body {
+      background: #f8fafc;
+    }
+    .participant-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      justify-content: center;
+    }
+    .session-active .participant-welcome h1 {
+      font-size: 22px;
+    }
+  </style>
+</head>
+<body>
+  <div class="participant-container" id="mainContainer">
+
+    <!-- State 1: Sync marker (brief, visible for OBS capture) -->
+    <div id="syncState" class="hidden">
+      <div class="sync-marker" style="max-width:600px; margin:0 auto">
+        <div class="sync-marker__label">Session Sync Marker</div>
+        <div class="sync-marker__value" id="participantSyncMarker"></div>
+        <div class="sync-marker__time" id="participantSyncTime"></div>
+      </div>
+      <div style="text-align:center; margin-top:24px; color:var(--text-muted); font-size:14px">
+        Preparing your session...
+      </div>
+    </div>
+
+    <!-- State 2: Onboarding (enhanced mode only) -->
+    <div id="onboardingState" class="hidden">
+      <div class="participant-welcome">
+        <h1>Welcome to Your Creative Session!</h1>
+        <p style="font-size:16px; margin-top:8px; color:var(--text-muted)">
+          Here's a quick overview of how this works before we get started.
+        </p>
+      </div>
+
+      <div class="tips-card" style="max-width:600px; margin:24px auto">
+        <div class="tips-card__title">How This Works</div>
+        <ul class="tips-card__list">
+          <li class="tips-card__item">
+            <span class="tips-card__icon">&#128172;</span>
+            <span>You'll be typing messages in the terminal window (the dark window). Type what you want and press <strong>Enter</strong> &mdash; it works like a chat.</span>
+          </li>
+          <li class="tips-card__item">
+            <span class="tips-card__icon">&#128187;</span>
+            <span>Claude will write code and create files for you. That's totally normal &mdash; you don't need to understand any of it.</span>
+          </li>
+          <li class="tips-card__item">
+            <span class="tips-card__icon">&#128260;</span>
+            <span>If something goes wrong or looks weird, just tell Claude in plain English what happened. It will fix things.</span>
+          </li>
+          <li class="tips-card__item">
+            <span class="tips-card__icon">&#11014;</span>
+            <span>You can scroll up in the terminal to see earlier messages if you need to.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div style="text-align:center">
+        <p style="font-size:15px; color:var(--text-muted); margin-bottom:16px">
+          When you're ready, click below and then switch to the terminal window to start chatting with Claude.
+        </p>
+        <button class="btn btn--primary" onclick="dismissOnboarding()" style="font-size:16px; padding:14px 32px">
+          I'm Ready to Start
+        </button>
+      </div>
+    </div>
+
+    <!-- State 3: Waiting (no session yet, or vanilla mode pre-launch) -->
+    <div id="waitingState">
+      <div class="participant-welcome">
+        <h1>Welcome!</h1>
+        <p>Your creative session will begin shortly.</p>
+        <p style="margin-top:8px; font-size:14px; color:var(--text-muted)">
+          The researcher will let you know when to start.
+        </p>
+      </div>
+    </div>
+
+    <!-- State 4: Active session (timer + tips) -->
+    <div id="activeState" class="hidden">
+      <div class="participant-welcome">
+        <h1>Your Creative Session</h1>
+      </div>
+
+      <!-- Timer -->
+      <div class="timer timer--large" id="timer">00:00:00</div>
+
+      <!-- Tips -->
+      <div class="tips-card">
+        <div class="tips-card__title">Quick Reference</div>
+        <ul class="tips-card__list">
+          <li class="tips-card__item">
+            <span class="tips-card__icon">&#9997;</span>
+            <span>Type what you want in plain English and press <strong>Enter</strong></span>
+          </li>
+          <li class="tips-card__item">
+            <span class="tips-card__icon">&#128187;</span>
+            <span>It's totally normal to see code appearing &mdash; you don't need to understand it</span>
+          </li>
+          <li class="tips-card__item">
+            <span class="tips-card__icon">&#128172;</span>
+            <span>If something looks wrong, just tell Claude what happened in your own words</span>
+          </li>
+          <li class="tips-card__item">
+            <span class="tips-card__icon">&#11014;</span>
+            <span>You can scroll up in the terminal to see earlier messages</span>
+          </li>
+          <li class="tips-card__item">
+            <span class="tips-card__icon">&#128161;</span>
+            <span>If you're stuck, try describing what you want the end result to look like</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/js/participant.js"></script>
+</body>
+</html>
